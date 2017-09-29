@@ -1,3 +1,4 @@
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include "pybind11/pybind11.h"
 
 #include "numpy/arrayobject.h"
@@ -5,6 +6,7 @@
 #include "ndarray/converter.h"
 
 namespace py = pybind11;
+using namespace py::literals;
 
 Eigen::MatrixXd returnMatrixXd() {
         Eigen::MatrixXd r(5, 3);
@@ -94,11 +96,39 @@ int acceptOverload(Eigen::Matrix2d const & m) {
     return 2;
 }
 
+int acceptNoneArray(ndarray::Array<double, 1, 1> const * array = nullptr) {
+    if (array) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
+
+int acceptNoneMatrixXd(Eigen::MatrixXd const * matrix = nullptr) {
+    if (matrix) {
+        return 2;
+    } else {
+        return 3;
+    }
+}
+
+int acceptNoneMatrix2d(Eigen::Matrix2d const * matrix = nullptr) {
+    if (matrix) {
+        return 4;
+    } else {
+        return 5;
+    }
+}
+
 struct MatrixOwner {
     typedef Eigen::Matrix<double,2,2,Eigen::DontAlign> MemberMatrix;
     MemberMatrix member;
     MemberMatrix & getMember() { return member; }
     explicit MatrixOwner() : member(MemberMatrix::Zero()) {}
+};
+
+bool acceptFullySpecifiedMatrix(Eigen::Matrix<double, 2, 2, 0, 2, 2> const & a, Eigen::Matrix<double, 2, 1, 0, 2, 1> const & b) {
+    return true;
 };
 
 PYBIND11_PLUGIN(pybind11_test_mod) {
@@ -130,6 +160,10 @@ PYBIND11_PLUGIN(pybind11_test_mod) {
     mod.def("acceptOverload", (int (*)(int)) acceptOverload);
     mod.def("acceptOverload", (int (*)(Eigen::Matrix2d const &)) acceptOverload);
     mod.def("acceptOverload", (int (*)(Eigen::Matrix3d const &)) acceptOverload);
+    mod.def("acceptNoneArray", acceptNoneArray, "array"_a = nullptr);
+    mod.def("acceptNoneMatrixXd", acceptNoneMatrixXd, "matrix"_a = nullptr);
+    mod.def("acceptNoneMatrix2d", acceptNoneMatrix2d, "matrix"_a = nullptr);
+    mod.def("acceptFullySpecifiedMatrix", acceptFullySpecifiedMatrix);
 
     return mod.ptr();
 }

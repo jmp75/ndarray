@@ -51,18 +51,19 @@ struct PyConverter< EigenView<T,N,C,XprKind_,Rows_,Cols_> > {
         } // else let the Array converter raise the exception
         if (!PyConverter< Array<T,N,C> >::fromPythonStage1(p)) return false;
         // check whether the size is correct if it's static
+        auto array = reinterpret_cast<PyArrayObject*>(p.get());
         if (N == 2) {
-            if (Rows_ != Eigen::Dynamic && PyArray_DIM(p.get(), 0) != Rows_) {
+            if (Rows_ != Eigen::Dynamic && PyArray_DIM(array, 0) != Rows_) {
                 PyErr_SetString(PyExc_ValueError, "incorrect number of rows for matrix");
                 return false;
             }
-            if (Cols_ != Eigen::Dynamic && PyArray_DIM(p.get(), 1) != Cols_) {
+            if (Cols_ != Eigen::Dynamic && PyArray_DIM(array, 1) != Cols_) {
                 PyErr_SetString(PyExc_ValueError, "incorrect number of columns for matrix");
                 return false;
             }
         } else {
             int requiredSize = Rows_ * Cols_;
-            if (requiredSize != Eigen::Dynamic && PyArray_SIZE(p.get()) != requiredSize) {
+            if (requiredSize != Eigen::Dynamic && PyArray_SIZE(array) != requiredSize) {
                 PyErr_SetString(PyExc_ValueError, "incorrect number of elements for vector");
                 return false;
             }
